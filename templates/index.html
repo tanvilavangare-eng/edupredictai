@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Home | AI-Based Student Performance Prediction System{% endblock %}
+
+{% block content %}
+<div class="container">
+    
+    <!-- Hero Banner Section -->
+    <div class="hero-section mb-5">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="d-inline-flex align-items-center gap-2 bg-white bg-opacity-10 px-3 py-1 rounded-pill mb-3 text-accent small fw-semibold">
+                    <i class="fa-solid fa-sparkles"></i> Next-Gen Academic Analytics & AI Mentorship
+                </div>
+                <h1 class="hero-title mb-3">AI-Based Student Performance Prediction System</h1>
+                <p class="lead text-white-50 mb-4">
+                    Empowering educators and institutions with machine learning to identify academic risks early, predict final outcomes with precision, and provide personalized intervention roadmaps.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a href="{{ url_for('prediction') }}" class="btn btn-primary-custom px-4 py-3 rounded-pill d-flex align-items-center gap-2 shadow">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span>Get Started &bull; Run AI Prediction</span>
+                    </a>
+                    {% if not session.get('user_id') %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-light px-4 py-3 rounded-pill d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>Teacher & Admin Login</span>
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-light px-4 py-3 rounded-pill d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-gauge-high"></i>
+                        <span>View Analytics Dashboard</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block text-center position-relative">
+                <div class="p-4 bg-white bg-opacity-10 rounded-4 border border-white border-opacity-25 shadow-lg backdrop-blur">
+                    <div class="d-flex justify-content-between align-items-center mb-3 text-start">
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill">
+                            <i class="fa-solid fa-circle-check me-1"></i> Live Model Ready
+                        </span>
+                        <span class="text-white-50 small">Random Forest ML</span>
+                    </div>
+                    <div class="bg-dark bg-opacity-50 p-3 rounded-3 text-start mb-3">
+                        <div class="d-flex justify-content-between text-white-50 small mb-1">
+                            <span>Predicted Final Score:</span>
+                            <span class="text-accent fw-bold">88.5% (Grade A+)</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 88.5%"></div>
+                        </div>
+                    </div>
+                    <div class="row g-2 text-start text-white-50 small">
+                        <div class="col-6">
+                            <div class="p-2 bg-white bg-opacity-10 rounded-2">
+                                <i class="fa-solid fa-shield-halved text-success me-1"></i> Risk Level: <strong class="text-white">Low</strong>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 bg-white bg-opacity-10 rounded-2">
+                                <i class="fa-solid fa-user-check text-info me-1"></i> Attendance: <strong class="text-white">92.5%</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Strip -->
+    <div class="row g-3 mb-5">
+        <div class="col-6 col-md-3">
+            <div class="academic-card text-center p-3">
+                <div class="display-6 fw-bold text-primary mb-1">{{ total_students|default(20) }}</div>
+                <div class="text-muted small fw-semibold text-uppercase">Students Monitored</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="academic-card text-center p-3">
+                <div class="display-6 fw-bold text-success mb-1">88.7%</div>
+                <div class="text-muted small fw-semibold text-uppercase">Model Accuracy (R²)</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="academic-card text-center p-3">
+                <div class="display-6 fw-bold text-warning mb-1">5 Key Metrics</div>
+                <div class="text-muted small fw-semibold text-uppercase">Holistic Evaluation</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="academic-card text-center p-3">
+                <div class="display-6 fw-bold text-danger mb-1">100%</div>
+                <div class="text-muted small fw-semibold text-uppercase">Explainable Insights</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Features Section -->
+    <div class="mb-5">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold" style="color: #0f233a;">Core Capabilities of the System</h2>
+            <p class="text-muted">Designed specifically for modern colleges, professors, and academic mentors.</p>
+        </div>
+        <div class="row g-4">
+            <!-- Feature 1 -->
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Predictive Academic Modeling</h5>
+                    <p class="text-muted small mb-0">
+                        Harnesses machine learning to analyze attendance, internal assessments, assignment milestones, and study habits to forecast final semester scores.
+                    </p>
+                </div>
+            </div>
+            <!-- Feature 2 -->
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Early At-Risk Alerts</h5>
+                    <p class="text-muted small mb-0">
+                        Instantly flags students hovering in High or Medium risk categories before exams occur, giving advisors sufficient time to trigger interventions.
+                    </p>
+                </div>
+            </div>
+            <!-- Feature 3 -->
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-lightbulb text-warning"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Explainable Recommendations</h5>
+                    <p class="text-muted small mb-0">
+                        Not a black box. The system pinpoints exact deficit areas (e.g. low attendance vs. assignment backlog) and generates personalized action items.
+                    </p>
+                </div>
+            </div>
+            <!-- Feature 4 -->
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-address-card text-success"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Comprehensive Profiles & Contacts</h5>
+                    <p class="text-muted small mb-0">
+                        Tracks student contact numbers along with Father's and Mother's phone numbers for quick parental outreach whenever intervention is mandated.
+                    </p>
+                </div>
+            </div>
+            <!-- Feature 5 -->
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-file-arrow-down text-info"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Audit-Ready Reports & Exports</h5>
+                    <p class="text-muted small mb-0">
+                        Download comprehensive student performance dossiers in print-ready layout or export full batch datasets to CSV for departmental records.
+                    </p>
+                </div>
+            </div>
+            <!-- Feature 6 -->
+            <div class="col-md-4">
+                <div class="feature-box">
+                    <div class="feature-icon-wrapper">
+                        <i class="fa-solid fa-shield-cat text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">Teacher & Admin Governance</h5>
+                    <p class="text-muted small mb-0">
+                        Dedicated teacher backend to retrain the ML model on new batches, monitor registered users, and inspect underlying database metrics.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About the Project Section -->
+    <div class="academic-card p-4 p-md-5 mb-5">
+        <div class="row align-items-center gy-4">
+            <div class="col-lg-6">
+                <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-2 rounded-pill mb-2">About The Project</span>
+                <h3 class="fw-bold mb-3" style="color: #0f233a;">Bridging Education and Predictive Artificial Intelligence</h3>
+                <p class="text-muted">
+                    Traditional educational reporting relies on retrospective report cards issued after the semester concludes — when it is already too late to help a struggling student.
+                </p>
+                <p class="text-muted">
+                    The <strong>AI-Based Student Performance Prediction System</strong> is built on the philosophy of proactive education. By continuously synthesizing five vital behavioral and academic pillars — <em>Attendance %, Internal Assessments, Coursework Submissions, Prior Term Results, and Daily Study Hours</em> — our trained Random Forest Regressor provides teachers with timely, transparent alerts.
+                </p>
+                <div class="d-flex gap-3 mt-4">
+                    <a href="{{ url_for('prediction') }}" class="btn btn-primary-custom px-4 py-2 rounded-pill">
+                        <i class="fa-solid fa-play me-1"></i> Try Prediction Now
+                    </a>
+                    <a href="{{ url_for('reports') }}" class="btn btn-secondary-custom px-4 py-2 rounded-pill">
+                        <i class="fa-solid fa-list-check me-1"></i> View Student Records
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="bg-light p-4 rounded-4 border">
+                    <h6 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-diagram-project text-primary me-2"></i> How The System Works</h6>
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <span class="badge bg-primary text-white rounded-circle p-2" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">1</span>
+                        <div>
+                            <strong class="d-block text-dark">Data Collection</strong>
+                            <small class="text-muted">Faculty logs attendance, tests, assignments, and study schedule.</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3 mb-3">
+                        <span class="badge bg-primary text-white rounded-circle p-2" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">2</span>
+                        <div>
+                            <strong class="d-block text-dark">ML Inference & Risk Scoring</strong>
+                            <small class="text-muted">Random Forest regressor computes predicted score & risk tier (Low, Medium, High).</small>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-start gap-3">
+                        <span class="badge bg-primary text-white rounded-circle p-2" style="width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;">3</span>
+                        <div>
+                            <strong class="d-block text-dark">Explainable Action Plan</strong>
+                            <small class="text-muted">Generates specific corrective interventions for student, teacher, and parents.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

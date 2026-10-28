@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block title %}AI Performance Prediction | Machine Learning Engine{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5">
+    
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #0f233a;">
+                <i class="fa-solid fa-robot text-primary me-2"></i> AI-Powered Student Performance Prediction
+            </h2>
+            <p class="text-muted small mb-0">Trained Random Forest Regressor analyzes five academic vectors to predict outcomes, risk tiers, and personalized intervention plans.</p>
+        </div>
+
+        <!-- Quick Presets -->
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="small fw-semibold text-muted me-1">Quick Scenarios:</span>
+            <button type="button" class="btn btn-sm btn-outline-success rounded-pill btn-load-sample" data-sample-type="high">
+                <i class="fa-solid fa-star me-1"></i> High Performer
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-warning rounded-pill btn-load-sample" data-sample-type="average">
+                <i class="fa-solid fa-gauge me-1"></i> Average
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill btn-load-sample" data-sample-type="risk">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i> At-Risk Alert
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        
+        <!-- LEFT COLUMN: Prediction Input Form -->
+        <div class="col-lg-5">
+            <div class="academic-card h-100">
+                <div class="card-header-academic bg-academic-dark text-white d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-sliders me-2 text-accent"></i> Input Student Academic Vectors</span>
+                    <span class="badge bg-primary rounded-pill small">AI Input Form</span>
+                </div>
+                <div class="p-4">
+                    
+                    <!-- Pre-select from saved students dropdown -->
+                    {% if student_options %}
+                    <div class="mb-4 p-3 bg-light rounded-3 border">
+                        <label class="form-label small fw-bold text-dark">
+                            <i class="fa-solid fa-database text-primary me-1"></i> Select Registered Student (Auto-fills inputs):
+                        </label>
+                        <select class="form-select form-select-sm" id="selectStudentDropdown" onchange="autoFillFromDropdown(this)">
+                            <option value="">-- Choose existing student or enter manual values below --</option>
+                            {% for opt in student_options %}
+                            <option value="{{ opt.id }}" 
+                                    data-name="{{ opt.name }}" 
+                                    data-id="{{ opt.student_id }}"
+                                    data-att="{{ opt.attendance_pct }}" 
+                                    data-intl="{{ opt.internal_marks }}" 
+                                    data-asgn="{{ opt.assignment_marks }}" 
+                                    data-prev="{{ opt.previous_exam_marks }}" 
+                                    data-sh="{{ opt.study_hours_per_day }}">
+                                {{ opt.student_id }} - {{ opt.name }} ({{ opt.class_course }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <form action="{{ url_for('prediction') }}" method="POST">
+                        <input type="hidden" name="db_student_id" id="db_student_id" value="{{ form_values.db_student_id if form_values else '' }}">
+
+                        <!-- Student Name or ID -->
+                        <div class="mb-3">
+                            <label class="form-label" for="student_name_input">Student Name or ID</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-user-graduate text-muted"></i></span>
+                                <input type="text" class="form-control" id="student_name_input" name="student_name" 
+                                       value="{{ form_values.student_name if form_values else 'Sneha Kulkarni' }}" 
+                                       placeholder="e.g. STU1006 / Sneha Kulkarni" required>
+                            </div>
+                        </div>
+
+                        <!-- 1. Attendance Percentage -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <label class="form-label" for="attendance_pct">Attendance Percentage (%)</label>
+                                <span class="badge bg-light text-muted border" id="attBadge">0 - 100%</span>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-calendar-check text-muted"></i></span>
+                                <input type="number" step="0.1" min="0" max="100" class="form-control" id="attendance_pct" name="attendance_pct" 
+                                       value="{{ form_values.attendance_pct if form_values else '78.0' }}" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. Internal Marks -->
+                        <div class="mb-3">
+                            <label class="form-label" for="internal_marks">Internal Assessment Marks (%)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-pencil text-muted"></i></span>
+                                <input type="number" step="0.1" min="0" max="100" class="form-control" id="internal_marks" name="internal_marks" 
+                                       value="{{ form_values.internal_marks if form_values else '72.0' }}" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. Assignment Marks -->
+                        <div class="mb-3">
+                            <label class="form-label" for="assignment_marks">Assignment Marks (%)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-file-lines text-muted"></i></span>
+                                <input type="number" step="0.1" min="0" max="100" class="form-control" id="assignment_marks" name="assignment_marks" 
+                                       value="{{ form_values.assignment_marks if form_values else '75.0' }}" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+
+                        <!-- 4. Previous Exam Marks -->
+                        <div class="mb-3">
+                            <label class="form-label" for="previous_exam_marks">Previous Exam Marks (%)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-clock-rotate-left text-muted"></i></span>
+                                <input type="number" step="0.1" min="0" max="100" class="form-control" id="previous_exam_marks" name="previous_exam_marks" 
+                                       value="{{ form_values.previous_exam_marks if form_values else '70.0' }}" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+
+                        <!-- 5. Study Hours per Day -->
+                        <div class="mb-4">
+                            <label class="form-label" for="study_hours_per_day">Study Hours per Day</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fa-solid fa-hourglass-half text-muted"></i></span>
+                                <input type="number" step="0.1" min="0" max="24" class="form-control" id="study_hours_per_day" name="study_hours_per_day" 
+                                       value="{{ form_values.study_hours_per_day if form_values else '3.5' }}" required>
+                                <span class="input-group-text">hrs/day</span>
+                            </div>
+                        </div>
+
+                        <!-- Predict Button -->
+                        <button type="submit" class="btn btn-primary-custom w-100 py-3 rounded-pill fw-bold shadow">
+                            <i class="fa-solid fa-wand-magic-sparkles me-2"></i> Predict Performance with AI
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Prediction Result & Explainable Report -->
+        <div class="col-lg-7">
+            
+            {% if prediction_result %}
+            <div class="academic-card border-0 prediction-result-card p-4 p-md-5 mb-4">
+                
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                    <div>
+                        <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-1 rounded-pill mb-1">
+                            <i class="fa-solid fa-brain me-1"></i> Live Scikit-Learn Model Output
+                        </span>
+                        <h4 class="fw-bold mb-0 text-dark">
+                            Performance Dossier for: <span class="text-primary">{{ student_name_display }}</span>
+                        </h4>
+                    </div>
+                    <button class="btn btn-sm btn-outline-dark rounded-pill px-3" onclick="window.print()">
+                        <i class="fa-solid fa-print me-1"></i> Print Report
+                    </button>
+                </div>
+
+                <!-- Score & Key Metrics Banner -->
+                <div class="row g-4 align-items-center mb-4">
+                    <div class="col-md-5 text-center">
+                        <div class="score-circle">
+                            <div class="score-num">{{ prediction_result.predicted_score }}%</div>
+                            <small class="text-white-50">Score</small>
+                        </div>
+                        <div class="mt-2 fw-bold text-dark fs-5">Grade {{ prediction_result.grade_letter }}</div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="bg-white p-3 rounded-3 border mb-2 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small fw-semibold">Predicted Performance:</span>
+                                {% if prediction_result.predicted_category == 'Excellent' %}
+                                <span class="badge badge-cat-excellent fs-6">Excellent</span>
+                                {% elif prediction_result.predicted_category == 'Good' %}
+                                <span class="badge badge-cat-good fs-6">Good</span>
+                                {% elif prediction_result.predicted_category == 'Average' %}
+                                <span class="badge badge-cat-average fs-6">Average</span>
+                                {% else %}
+                                <span class="badge badge-cat-risk fs-6">At-Risk</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-3 rounded-3 border mb-2 shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small fw-semibold">Risk Level Assessment:</span>
+                                {% if prediction_result.risk_level == 'Low' %}
+                                <span class="badge badge-risk-low fs-6"><i class="fa-solid fa-shield-check me-1"></i> Low Risk</span>
+                                {% elif prediction_result.risk_level == 'Medium' %}
+                                <span class="badge badge-risk-medium fs-6"><i class="fa-solid fa-triangle-exclamation me-1"></i> Medium Risk</span>
+                                {% else %}
+                                <span class="badge badge-risk-high fs-6"><i class="fa-solid fa-skull-crossbones me-1"></i> High Risk</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-3 rounded-3 border shadow-sm">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small fw-semibold">Model Confidence:</span>
+                                <span class="badge bg-success text-white">88.7% R² Fit</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weak Areas / Diagnostic Section (User Spec) -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-danger mb-2">
+                        <i class="fa-solid fa-magnifying-glass-chart me-2"></i> Areas Where Student Needs Improvement:
+                    </h6>
+                    <ul class="list-group list-group-flush border rounded-3 bg-white">
+                        {% for area in prediction_result.weak_areas %}
+                        <li class="list-group-item d-flex align-items-start gap-2 py-2">
+                            <i class="fa-solid fa-circle-exclamation text-warning mt-1"></i>
+                            <span class="text-dark">{{ area }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Recommended Actions / Personalized Roadmap (User Spec) -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-success mb-2">
+                        <i class="fa-solid fa-list-check me-2"></i> Recommended Interventions & Action Plan:
+                    </h6>
+                    <div class="bg-white p-3 rounded-3 border border-success-subtle">
+                        {% for action in prediction_result.actions %}
+                        <div class="d-flex align-items-start gap-2 mb-2">
+                            <i class="fa-solid fa-circle-check text-success mt-1"></i>
+                            <span class="text-dark small">{{ action }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Quick Save to Student Record Button (if linked to existing DB student) -->
+                {% if form_values and form_values.db_student_id %}
+                <form action="{{ url_for('save_prediction_to_student') }}" method="POST" class="text-end">
+                    <input type="hidden" name="student_db_id" value="{{ form_values.db_student_id }}">
+                    <input type="hidden" name="pred_score" value="{{ prediction_result.predicted_score }}">
+                    <input type="hidden" name="pred_cat" value="{{ prediction_result.predicted_category }}">
+                    <input type="hidden" name="pred_risk" value="{{ prediction_result.risk_level }}">
+                    <input type="hidden" name="pred_recs" value="{{ prediction_result.recommendation_summary }}">
+                    <input type="hidden" name="pred_weak" value="{{ prediction_result.weak_areas | join('; ') }}">
+                    <button type="submit" class="btn btn-outline-primary rounded-pill px-4">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Update & Save to Student Record
+                    </button>
+                </form>
+                {% endif %}
+
+            </div>
+
+            {% else %}
+            <!-- Initial State Placeholder Before Submission -->
+            <div class="academic-card h-100 p-5 text-center d-flex flex-column justify-content-center align-items-center">
+                <div class="p-4 rounded-circle bg-primary bg-opacity-10 text-primary mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; font-size: 2rem;">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <h4 class="fw-bold mb-2" style="color: #0f233a;">AI Diagnostic Engine Ready</h4>
+                <p class="text-muted small max-w-md mb-4" style="max-width: 420px;">
+                    Enter the student's metrics on the left panel or click any quick scenario (High Performer, Average, At-Risk) to generate instant predictive insights.
+                </p>
+                <div class="row g-3 w-100" style="max-width: 500px;">
+                    <div class="col-4">
+                        <div class="p-2 border rounded-3 bg-light small">
+                            <i class="fa-solid fa-check text-success d-block mb-1"></i> Score Forecast
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 border rounded-3 bg-light small">
+                            <i class="fa-solid fa-shield text-warning d-block mb-1"></i> Risk Category
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 border rounded-3 bg-light small">
+                            <i class="fa-solid fa-compass text-info d-block mb-1"></i> Action Roadmap
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function autoFillFromDropdown(select) {
+    const selectedOption = select.options[select.selectedIndex];
+    if (!selectedOption || !selectedOption.value) return;
+
+    document.getElementById('db_student_id').value = selectedOption.value;
+    document.getElementById('student_name_input').value = selectedOption.getAttribute('data-name');
+    document.getElementById('attendance_pct').value = selectedOption.getAttribute('data-att');
+    document.getElementById('internal_marks').value = selectedOption.getAttribute('data-intl');
+    document.getElementById('assignment_marks').value = selectedOption.getAttribute('data-asgn');
+    document.getElementById('previous_exam_marks').value = selectedOption.getAttribute('data-prev');
+    document.getElementById('study_hours_per_day').value = selectedOption.getAttribute('data-sh');
+}
+</script>
+{% endblock %}

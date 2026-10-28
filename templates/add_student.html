@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}{% if edit_student %}Update Student Profile{% else %}Add Student Details{% endif %} | AI Prediction System{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1" style="color: #0f233a;">
+                        <i class="fa-solid fa-user-graduate text-primary me-2"></i>
+                        {% if edit_student %}Update Student Academic Dossier{% else %}Add New Student Academic Profile{% endif %}
+                    </h2>
+                    <p class="text-muted small mb-0">Enter academic milestones, attendance records, study habits, and emergency guardian contacts.</p>
+                </div>
+                <a href="{{ url_for('reports') }}" class="btn btn-outline-secondary rounded-pill px-3 py-2 small">
+                    <i class="fa-solid fa-arrow-left me-1"></i> Back to Student List
+                </a>
+            </div>
+
+            <div class="academic-card p-4 p-md-5">
+                <form id="studentDetailsForm" action="{{ url_for('add_student') }}" method="POST">
+                    
+                    {% if edit_student %}
+                    <input type="hidden" name="action_mode" value="update">
+                    <input type="hidden" name="existing_db_id" value="{{ edit_student.id }}">
+                    <div class="alert alert-warning d-flex align-items-center gap-2 small mb-4">
+                        <i class="fa-solid fa-pen-to-square fs-5"></i>
+                        <div>You are modifying the existing record for <strong>{{ edit_student.name }} ({{ edit_student.student_id }})</strong>. Click <em>Update Details</em> below to save changes.</div>
+                    </div>
+                    {% else %}
+                    <input type="hidden" name="action_mode" value="create">
+                    {% endif %}
+
+                    <!-- SECTION 1: Personal & Course Identifiers -->
+                    <div class="border-bottom pb-3 mb-4">
+                        <h5 class="fw-bold text-primary mb-3">
+                            <i class="fa-solid fa-id-card me-2"></i> 1. Student Identity & Program
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label" for="student_id">Student ID / Roll No *</label>
+                                <input type="text" class="form-control" id="student_id" name="student_id" 
+                                       value="{{ edit_student.student_id if edit_student else '' }}" 
+                                       placeholder="e.g. STU1021" required {% if edit_student %}readonly{% endif %}>
+                                <div class="form-text small">Unique institutional registration number.</div>
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label" for="name">Student Full Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" 
+                                       value="{{ edit_student.name if edit_student else '' }}" 
+                                       placeholder="e.g. Rohan Verma" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="gender">Gender</label>
+                                <select class="form-select" id="gender" name="gender">
+                                    <option value="Male" {% if edit_student and edit_student.gender == 'Male' %}selected{% endif %}>Male</option>
+                                    <option value="Female" {% if edit_student and edit_student.gender == 'Female' %}selected{% endif %}>Female</option>
+                                    <option value="Other" {% if edit_student and edit_student.gender == 'Other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-8">
+                                <label class="form-label" for="class_course">Class / Course / Specialization *</label>
+                                <input type="text" class="form-control" id="class_course" name="class_course" 
+                                       value="{{ edit_student.class_course if edit_student else '' }}" 
+                                       placeholder="e.g. B.Tech Computer Science & Engineering (3rd Year)" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="age">Age (Years)</label>
+                                <input type="number" class="form-control" id="age" name="age" min="15" max="60" 
+                                       value="{{ edit_student.age if edit_student else '20' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 2: Personal & Parental Contacts (User Request) -->
+                    <div class="border-bottom pb-3 mb-4 bg-light p-3 rounded-3 border">
+                        <h5 class="fw-bold text-dark mb-3">
+                            <i class="fa-solid fa-address-book text-success me-2"></i> 2. Contact & Parental Information
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label" for="phone">Student Mobile No</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-mobile-screen"></i></span>
+                                    <input type="text" class="form-control" id="phone" name="phone" 
+                                           value="{{ edit_student.phone if edit_student else '' }}" 
+                                           placeholder="+91 98765 43210">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="father_phone">Father's Mobile No *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
+                                    <input type="text" class="form-control" id="father_phone" name="father_phone" 
+                                           value="{{ edit_student.father_phone if edit_student else '' }}" 
+                                           placeholder="+91 98765 43211" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="mother_phone">Mother's Mobile No *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fa-solid fa-phone"></i></span>
+                                    <input type="text" class="form-control" id="mother_phone" name="mother_phone" 
+                                           value="{{ edit_student.mother_phone if edit_student else '' }}" 
+                                           placeholder="+91 98765 43212" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 3: Academic Predictors & Study Habits -->
+                    <div class="pb-3 mb-4">
+                        <h5 class="fw-bold text-primary mb-3">
+                            <i class="fa-solid fa-sliders me-2"></i> 3. Academic Indicators for AI Engine
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label" for="attendance_pct">Attendance Percentage (%) *</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" min="0" max="100" class="form-control" id="attendance_pct" name="attendance_pct" 
+                                           value="{{ edit_student.attendance_pct if edit_student else '' }}" 
+                                           placeholder="e.g. 85.5" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text small">&ge; 75% standard university requirement.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label" for="internal_marks">Internal Assessment Marks (%) *</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" min="0" max="100" class="form-control" id="internal_marks" name="internal_marks" 
+                                           value="{{ edit_student.internal_marks if edit_student else '' }}" 
+                                           placeholder="e.g. 78.0" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text small">Continuous mid-term evaluation.</div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label" for="assignment_marks">Assignment Marks (%) *</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" min="0" max="100" class="form-control" id="assignment_marks" name="assignment_marks" 
+                                           value="{{ edit_student.assignment_marks if edit_student else '' }}" 
+                                           placeholder="e.g. 84.0" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text small">Project and homework evaluations.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="previous_exam_marks">Previous Exam Marks (%) *</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" min="0" max="100" class="form-control" id="previous_exam_marks" name="previous_exam_marks" 
+                                           value="{{ edit_student.previous_exam_marks if edit_student else '' }}" 
+                                           placeholder="e.g. 80.0" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text small">Historical end-term aggregate.</div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label" for="study_hours_per_day">Study Hours per Day *</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" min="0" max="24" class="form-control" id="study_hours_per_day" name="study_hours_per_day" 
+                                           value="{{ edit_student.study_hours_per_day if edit_student else '' }}" 
+                                           placeholder="e.g. 4.0" required>
+                                    <span class="input-group-text">hrs/day</span>
+                                </div>
+                                <div class="form-text small">Dedicated daily self-study duration.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ACTION BUTTONS (Save Student, Update Details, Reset Form) -->
+                    <div class="d-flex flex-wrap gap-3 pt-3 border-top">
+                        {% if edit_student %}
+                        <button type="submit" class="btn btn-warning px-4 py-2 rounded-pill fw-semibold shadow-sm">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> Update Details
+                        </button>
+                        <a href="{{ url_for('add_student') }}" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-semibold">
+                            Cancel Editing
+                        </a>
+                        {% else %}
+                        <button type="submit" class="btn btn-primary-custom px-4 py-2 rounded-pill fw-semibold shadow-sm">
+                            <i class="fa-solid fa-floppy-disk me-1"></i> Save Student Record
+                        </button>
+                        <button type="button" class="btn btn-secondary-custom px-4 py-2 rounded-pill fw-semibold" onclick="document.getElementById('studentDetailsForm').reset()">
+                            <i class="fa-solid fa-arrow-rotate-left me-1"></i> Reset Form
+                        </button>
+                        {% endif %}
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

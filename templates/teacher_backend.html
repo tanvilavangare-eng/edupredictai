@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Backend Management | AI Model Operations{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5">
+    
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #0f233a;">
+                <i class="fa-solid fa-gears text-primary me-2"></i> Faculty & Administrator Backend Portal
+            </h2>
+            <p class="text-muted small mb-0">Manage AI model hyperparameters, inspect feature weights, supervise registered accounts, and manage database records.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <!-- Retrain Model Button -->
+            <form action="{{ url_for('retrain_model_route') }}" method="POST">
+                <button type="submit" class="btn btn-primary-custom rounded-pill px-3 py-2 small fw-semibold shadow-sm">
+                    <i class="fa-solid fa-arrows-rotate me-1"></i> Retrain Random Forest ML Model
+                </button>
+            </form>
+            <a href="{{ url_for('add_student') }}" class="btn btn-outline-primary rounded-pill px-3 py-2 small fw-semibold">
+                <i class="fa-solid fa-user-plus me-1"></i> Add Student
+            </a>
+        </div>
+    </div>
+
+    <!-- Machine Learning Telemetry & Feature Importance -->
+    <div class="row g-4 mb-4">
+        
+        <!-- Model Metrics Card -->
+        <div class="col-lg-5">
+            <div class="academic-card h-100">
+                <div class="card-header-academic d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-microchip text-primary me-2"></i> AI Model Status & Fit</span>
+                    <span class="badge bg-success rounded-pill">Active</span>
+                </div>
+                <div class="p-4">
+                    <div class="mb-3">
+                        <div class="text-muted small">Algorithm</div>
+                        <h5 class="fw-bold text-dark mb-0">Random Forest Regressor (120 Estimators)</h5>
+                    </div>
+
+                    <div class="row g-2 text-center mb-4">
+                        <div class="col-4">
+                            <div class="p-3 border rounded-3 bg-light">
+                                <div class="text-muted small">R² Fit Score</div>
+                                <div class="display-6 fw-bold text-success" style="font-size: 1.6rem;">{{ model_info.r2_score }}</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 border rounded-3 bg-light">
+                                <div class="text-muted small">Mean Abs Error</div>
+                                <div class="display-6 fw-bold text-primary" style="font-size: 1.6rem;">&plusmn;{{ model_info.mae_score }}%</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 border rounded-3 bg-light">
+                                <div class="text-muted small">Train Samples</div>
+                                <div class="display-6 fw-bold text-dark" style="font-size: 1.6rem;">{{ model_info.samples_count }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info small d-flex align-items-center gap-2 mb-0">
+                        <i class="fa-solid fa-circle-info fs-5"></i>
+                        <div>Continuous training pipeline validates model across 5 distinct academic indicators with cross-validation.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Importance Breakdown -->
+        <div class="col-lg-7">
+            <div class="academic-card h-100">
+                <div class="card-header-academic d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-scale-balanced text-primary me-2"></i> Feature Importance (Explainable AI)</span>
+                    <span class="text-muted small">Weight Distribution</span>
+                </div>
+                <div class="p-4">
+                    <p class="text-muted small mb-3">
+                        How significantly each variable drives the predicted outcome in the Random Forest decision trees:
+                    </p>
+
+                    <!-- Internal Marks -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>1. Internal Assessment Marks</span>
+                            <span class="text-primary">28.4%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 28.4%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Previous Exam Marks -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>2. Previous Exam History</span>
+                            <span class="text-info">24.2%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 24.2%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>3. Lecture Attendance % (Threshold Trigger)</span>
+                            <span class="text-success">22.1%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 22.1%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Assignment Marks -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>4. Assignment & Homework Submissions</span>
+                            <span class="text-warning">17.8%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 17.8%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Daily Study Hours -->
+                    <div class="mb-1">
+                        <div class="d-flex justify-content-between small fw-semibold mb-1">
+                            <span>5. Daily Study Duration</span>
+                            <span class="text-danger">7.5%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 7.5%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Registered Users Management Table (User Request) -->
+    <div class="academic-card mb-4 overflow-hidden">
+        <div class="card-header-academic bg-academic-dark text-white d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-users text-accent me-2"></i> Registered Faculty, Students & Parental Directory</span>
+            <span class="badge bg-primary rounded-pill">{{ users|length }} Total Registered</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small">
+                    <tr>
+                        <th>User Name</th>
+                        <th>Email & Username</th>
+                        <th>Role</th>
+                        <th>Department / Class</th>
+                        <th>Personal Phone</th>
+                        <th>Father's Phone</th>
+                        <th>Mother's Phone</th>
+                        <th>Registered On</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>
+                            <strong class="text-dark">{{ u.full_name }}</strong>
+                        </td>
+                        <td>
+                            <div>{{ u.email }}</div>
+                            <small class="text-muted">@{{ u.username }}</small>
+                        </td>
+                        <td>
+                            <span class="badge {% if u.role == 'teacher' %}bg-primary{% elif u.role == 'admin' %}bg-dark{% else %}bg-info text-dark{% endif %} rounded-pill">
+                                {{ u.role|title }}
+                            </span>
+                        </td>
+                        <td>{{ u.class_course or 'General' }}</td>
+                        <td>{{ u.phone or '-' }}</td>
+                        <td>{{ u.father_phone or '-' }}</td>
+                        <td>{{ u.mother_phone or '-' }}</td>
+                        <td class="text-muted small">{{ u.created_at[:10] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

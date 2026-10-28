@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Student Reports & Performance Dossiers{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5">
+    
+    <!-- Top Action Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #0f233a;">
+                <i class="fa-solid fa-file-invoice text-primary me-2"></i> Student Performance Reports
+            </h2>
+            <p class="text-muted small mb-0">Search, filter, view comprehensive student dossiers, and export departmental records.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-outline-success rounded-pill px-3 py-2 small fw-semibold" onclick="exportTableToCSV('Student_Performance_Report_2026.csv')">
+                <i class="fa-solid fa-file-excel me-1"></i> Download CSV Report
+            </button>
+            <button type="button" class="btn btn-outline-dark rounded-pill px-3 py-2 small fw-semibold" onclick="window.print()">
+                <i class="fa-solid fa-print me-1"></i> Print Batch Dossier
+            </button>
+            <a href="{{ url_for('add_student') }}" class="btn btn-primary-custom rounded-pill px-3 py-2 small fw-semibold shadow-sm">
+                <i class="fa-solid fa-user-plus me-1"></i> Add Student
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar Card -->
+    <div class="academic-card p-3 mb-4">
+        <div class="row g-3 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" id="searchStudentInput" onkeyup="filterStudentTable()" placeholder="Search by Student ID, Name, or Course...">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex align-items-center gap-2">
+                    <label class="small fw-semibold text-muted text-nowrap mb-0">Risk Filter:</label>
+                    <select class="form-select form-select-sm" id="filterRiskSelect" onchange="filterStudentTable()">
+                        <option value="all">All Risk Levels (Show All)</option>
+                        <option value="high">High Risk (At-Risk)</option>
+                        <option value="medium">Medium Risk (Average)</option>
+                        <option value="low">Low Risk (Good / Excellent)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3 text-md-end">
+                <span class="badge bg-light text-dark border px-3 py-2">
+                    Showing <strong id="showingCount">{{ students|length }}</strong> of {{ students|length }} students
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Student Reports Table -->
+    <div class="academic-card overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-academic align-middle mb-0" id="studentsReportTable">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Student Name & Course</th>
+                        <th class="text-center">Attendance</th>
+                        <th class="text-center">Internal</th>
+                        <th class="text-center">Assign.</th>
+                        <th class="text-center">Prev Exam</th>
+                        <th class="text-center">Predicted</th>
+                        <th class="text-center">Risk Level</th>
+                        <th class="text-end no-print">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in students %}
+                    <tr data-student-id="{{ s.student_id }}" 
+                        data-student-name="{{ s.name }}" 
+                        data-course="{{ s.class_course }}" 
+                        data-risk-level="{{ s.risk_level }}">
+                        <td>
+                            <strong class="text-primary">{{ s.student_id }}</strong>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ s.name }}</div>
+                            <div class="text-muted small">{{ s.class_course }}</div>
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-semibold {% if s.attendance_pct < 65 %}text-danger{% elif s.attendance_pct < 75 %}text-warning{% else %}text-success{% endif %}">
+                                {{ s.attendance_pct }}%
+                            </span>
+                        </td>
+                        <td class="text-center">{{ s.internal_marks }}%</td>
+                        <td class="text-center">{{ s.assignment_marks }}%</td>
+                        <td class="text-center">{{ s.previous_exam_marks }}%</td>
+                        <td class="text-center">
+                            {% if s.predicted_score %}
+                            <div class="fw-bold text-dark">{{ s.predicted_score }}%</div>
+                            <span class="badge {% if s.predicted_category == 'Excellent' %}badge-cat-excellent{% elif s.predicted_category == 'Good' %}badge-cat-good{% elif s.predicted_category == 'Average' %}badge-cat-average{% else %}badge-cat-risk{% endif %} small">
+                                {{ s.predicted_category }}
+                            </span>
+                            {% else %}
+                            <span class="text-muted small">Pending AI</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if s.risk_level == 'Low' %}
+                            <span class="badge badge-risk-low"><i class="fa-solid fa-circle-check me-1"></i> Low</span>
+                            {% elif s.risk_level == 'Medium' %}
+                            <span class="badge badge-risk-medium"><i class="fa-solid fa-triangle-exclamation me-1"></i> Medium</span>
+                            {% else %}
+                            <span class="badge badge-risk-high"><i class="fa-solid fa-skull-crossbones me-1"></i> High</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end no-print">
+                            <div class="d-inline-flex gap-1">
+                                <!-- View Report Modal Button -->
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#studentModal{{ s.id }}" 
+                                        title="View Full Report">
+                                    <i class="fa-solid fa-eye me-1"></i> View Report
+                                </button>
+                                
+                                <!-- Edit Student -->
+                                <a href="{{ url_for('add_student', edit_id=s.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-2" title="Edit Student">
+                                    <i class="fa-solid fa-pen"></i>
+                                </a>
+
+                                <!-- Delete Student (For Teacher/Admin) -->
+                                {% if session.get('role') in ['teacher', 'admin'] %}
+                                <form action="{{ url_for('delete_student', student_id=s.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete student record for {{ s.name }}?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Delete">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Individual Student Modal Dossier -->
+                    <div class="modal fade" id="studentModal{{ s.id }}" tabindex="-1" aria-labelledby="modalLabel{{ s.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content border-0 shadow-lg">
+                                <div class="modal-header bg-academic-dark text-white">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-id-card text-accent fs-4"></i>
+                                        <div>
+                                            <h5 class="modal-title mb-0" id="modalLabel{{ s.id }}">Academic Dossier: {{ s.name }}</h5>
+                                            <small class="text-white-50">{{ s.student_id }} &bull; {{ s.class_course }}</small>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body p-4">
+                                    
+                                    <!-- Contact details bar -->
+                                    <div class="p-3 bg-light rounded-3 border mb-3">
+                                        <div class="row g-2 small">
+                                            <div class="col-sm-4">
+                                                <i class="fa-solid fa-phone text-primary me-1"></i> Student: <strong>{{ s.phone or 'Not Provided' }}</strong>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <i class="fa-solid fa-user-tie text-success me-1"></i> Father: <strong>{{ s.father_phone or 'Not Provided' }}</strong>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <i class="fa-solid fa-heart text-danger me-1"></i> Mother: <strong>{{ s.mother_phone or 'Not Provided' }}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Metrics Grid -->
+                                    <div class="row g-3 mb-4 text-center">
+                                        <div class="col-4 col-sm-2">
+                                            <div class="p-2 border rounded-3 bg-white">
+                                                <div class="text-muted small">Attendance</div>
+                                                <div class="fw-bold fs-6">{{ s.attendance_pct }}%</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-sm-2">
+                                            <div class="p-2 border rounded-3 bg-white">
+                                                <div class="text-muted small">Internal</div>
+                                                <div class="fw-bold fs-6">{{ s.internal_marks }}%</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-sm-2">
+                                            <div class="p-2 border rounded-3 bg-white">
+                                                <div class="text-muted small">Assignment</div>
+                                                <div class="fw-bold fs-6">{{ s.assignment_marks }}%</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-sm-2">
+                                            <div class="p-2 border rounded-3 bg-white">
+                                                <div class="text-muted small">Prev Exam</div>
+                                                <div class="fw-bold fs-6">{{ s.previous_exam_marks }}%</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-sm-2">
+                                            <div class="p-2 border rounded-3 bg-white">
+                                                <div class="text-muted small">Study Hrs</div>
+                                                <div class="fw-bold fs-6">{{ s.study_hours_per_day }} h/d</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-sm-2">
+                                            <div class="p-2 border rounded-3 bg-primary-subtle text-primary border-primary">
+                                                <div class="small fw-semibold">Predicted</div>
+                                                <div class="fw-bold fs-6">{{ s.predicted_score }}%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Diagnosis & Recommendations -->
+                                    <div class="mb-3">
+                                        <h6 class="fw-bold text-dark mb-1"><i class="fa-solid fa-list-check text-success me-2"></i> Advisory Recommendations:</h6>
+                                        <p class="text-muted small bg-light p-3 rounded-3 border mb-0">
+                                            {{ s.recommendations or 'Continue standard study curriculum and maintain attendance records.' }}
+                                        </p>
+                                    </div>
+
+                                    {% if s.improvement_areas %}
+                                    <div>
+                                        <h6 class="fw-bold text-danger mb-1"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i> Flagged Focus Areas:</h6>
+                                        <p class="text-muted small bg-light p-3 rounded-3 border mb-0">
+                                            {{ s.improvement_areas }}
+                                        </p>
+                                    </div>
+                                    {% endif %}
+
+                                </div>
+                                <div class="modal-footer bg-light">
+                                    <a href="{{ url_for('prediction') }}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                        <i class="fa-solid fa-brain me-1"></i> Re-Run Prediction
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

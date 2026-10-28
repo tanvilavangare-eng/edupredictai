@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Student Performance Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-lg-5">
+    
+    <!-- Header with Quick Action -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold mb-1" style="color: #0f233a;">
+                <i class="fa-solid fa-chart-pie text-primary me-2"></i> Institutional Performance Dashboard
+            </h2>
+            <p class="text-muted small mb-0">Real-time academic telemetry, risk diagnostics, and machine learning grade forecasts.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ url_for('add_student') }}" class="btn btn-outline-primary rounded-pill px-3 py-2 small fw-semibold">
+                <i class="fa-solid fa-user-plus me-1"></i> Add Student
+            </a>
+            <a href="{{ url_for('prediction') }}" class="btn btn-primary-custom rounded-pill px-3 py-2 small fw-semibold shadow-sm">
+                <i class="fa-solid fa-wand-magic-sparkles me-1"></i> New AI Prediction
+            </a>
+        </div>
+    </div>
+
+    <!-- 5 KPI Cards Row (Matches User Request Spec) -->
+    <div class="row g-3 mb-4">
+        <!-- 1. Total Students -->
+        <div class="col-sm-6 col-xl">
+            <div class="kpi-card kpi-primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-label">Total Students</div>
+                        <div class="kpi-value text-primary">{{ stats.total_students }}</div>
+                    </div>
+                    <div class="kpi-icon bg-primary bg-opacity-10 text-primary">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    <span class="text-success fw-semibold"><i class="fa-solid fa-arrow-trend-up"></i> 100%</span> active cohort
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Average Marks -->
+        <div class="col-sm-6 col-xl">
+            <div class="kpi-card kpi-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-label">Average Marks</div>
+                        <div class="kpi-value text-success">{{ stats.avg_marks }}%</div>
+                    </div>
+                    <div class="kpi-icon bg-success bg-opacity-10 text-success">
+                        <i class="fa-solid fa-award"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    Across internal & assignments
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Average Attendance -->
+        <div class="col-sm-6 col-xl">
+            <div class="kpi-card kpi-primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-label">Average Attendance</div>
+                        <div class="kpi-value text-info">{{ stats.avg_attendance }}%</div>
+                    </div>
+                    <div class="kpi-icon bg-info bg-opacity-10 text-info">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    Threshold: &ge; 75.0% target
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Students at Risk (Crucial Alert) -->
+        <div class="col-sm-6 col-xl">
+            <div class="kpi-card kpi-danger">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-label">Students at Risk</div>
+                        <div class="kpi-value text-danger">{{ stats.high_risk_count }}</div>
+                    </div>
+                    <div class="kpi-icon bg-danger bg-opacity-10 text-danger">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-danger small fw-semibold">
+                    Requires immediate counseling
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Students Performing Well -->
+        <div class="col-sm-6 col-xl">
+            <div class="kpi-card kpi-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="kpi-label">Top Performers</div>
+                        <div class="kpi-value text-warning" style="color: #d97706 !important;">{{ stats.excellent_count }}</div>
+                    </div>
+                    <div class="kpi-icon bg-warning bg-opacity-10 text-warning">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-muted small">
+                    Grade A+ (&ge; 80% forecast)
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        
+        <!-- Chart 1: Performance Tier Breakdown -->
+        <div class="col-lg-5">
+            <div class="academic-card h-100">
+                <div class="card-header-academic d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-chart-pie me-2 text-primary"></i> Performance Tier Distribution</span>
+                    <span class="badge bg-light text-dark border small">AI Classified</span>
+                </div>
+                <div class="p-4 d-flex flex-column align-items-center justify-content-center">
+                    <div style="height: 260px; width: 100%; position: relative;">
+                        <canvas id="tierDistributionChart"></canvas>
+                    </div>
+                    <div class="row w-100 text-center mt-3 pt-3 border-top g-2">
+                        <div class="col-3">
+                            <span class="badge bg-primary px-2 py-1 mb-1 d-block">Excellent</span>
+                            <strong class="text-dark">{{ stats.excellent_count }}</strong>
+                        </div>
+                        <div class="col-3">
+                            <span class="badge bg-info text-dark px-2 py-1 mb-1 d-block">Good</span>
+                            <strong class="text-dark">{{ stats.good_count }}</strong>
+                        </div>
+                        <div class="col-3">
+                            <span class="badge bg-warning text-dark px-2 py-1 mb-1 d-block">Average</span>
+                            <strong class="text-dark">{{ stats.average_count }}</strong>
+                        </div>
+                        <div class="col-3">
+                            <span class="badge bg-danger px-2 py-1 mb-1 d-block">At-Risk</span>
+                            <strong class="text-danger">{{ stats.high_risk_count }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 2: Attendance vs Score Correlation -->
+        <div class="col-lg-7">
+            <div class="academic-card h-100">
+                <div class="card-header-academic d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-chart-line me-2 text-success"></i> Attendance % vs Predicted Performance Score</span>
+                    <span class="text-muted small">Cohort Correlation</span>
+                </div>
+                <div class="p-4">
+                    <div style="height: 280px; width: 100%;">
+                        <canvas id="attendanceCorrelationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- At-Risk Alert Table and Recent Predictions -->
+    <div class="row g-4">
+        
+        <!-- High Priority At-Risk Alert Banner -->
+        <div class="col-lg-6">
+            <div class="academic-card h-100">
+                <div class="card-header-academic bg-danger-subtle text-danger d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="fa-solid fa-circle-exclamation me-2"></i> Students Requiring Urgent Academic Support</span>
+                    <span class="badge bg-danger rounded-pill">{{ at_risk_students|length }} Flagged</span>
+                </div>
+                <div class="p-3">
+                    {% if at_risk_students %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Attendance</th>
+                                    <th>Prev Exam</th>
+                                    <th>Predicted</th>
+                                    <th>Parent Contact</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in at_risk_students %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ s.name }}</div>
+                                        <div class="text-muted small">{{ s.student_id }} &bull; {{ s.class_course }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                            {{ s.attendance_pct }}%
+                                        </span>
+                                    </td>
+                                    <td>{{ s.previous_exam_marks }}%</td>
+                                    <td>
+                                        <span class="fw-bold text-danger">{{ s.predicted_score }}%</span>
+                                    </td>
+                                    <td>
+                                        <a href="tel:{{ s.father_phone or s.phone }}" class="btn btn-sm btn-outline-danger py-1 px-2 rounded-pill small" title="Contact Guardian">
+                                            <i class="fa-solid fa-phone me-1"></i> Call Parent
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-circle-check text-success fs-1 mb-2"></i>
+                        <p class="mb-0">Excellent! No students currently in High Risk tier.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Performing Students Leaderboard -->
+        <div class="col-lg-6">
+            <div class="academic-card h-100">
+                <div class="card-header-academic bg-success-subtle text-success d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="fa-solid fa-medal me-2"></i> Dean's List & High Performers</span>
+                    <span class="badge bg-success rounded-pill">Top Tier</span>
+                </div>
+                <div class="p-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Attendance</th>
+                                    <th>Daily Study</th>
+                                    <th>Predicted Score</th>
+                                    <th>Grade</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for s in top_students %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold text-dark">{{ s.name }}</div>
+                                        <div class="text-muted small">{{ s.student_id }}</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                            {{ s.attendance_pct }}%
+                                        </span>
+                                    </td>
+                                    <td>{{ s.study_hours_per_day }} hrs/day</td>
+                                    <td>
+                                        <strong class="text-primary">{{ s.predicted_score }}%</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-cat-excellent">A+ Honors</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 1. Tier Distribution Doughnut Chart
+    const ctxTier = document.getElementById('tierDistributionChart');
+    if (ctxTier) {
+        new Chart(ctxTier, {
+            type: 'doughnut',
+            data: {
+                labels: ['Excellent (A+)', 'Good (A)', 'Average (B)', 'At-Risk (C/Fail)'],
+                datasets: [{
+                    data: [
+                        {{ stats.excellent_count }},
+                        {{ stats.good_count }},
+                        {{ stats.average_count }},
+                        {{ stats.high_risk_count }}
+                    ],
+                    backgroundColor: ['#1a73e8', '#38bdf8', '#f59e0b', '#ef4444'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11, family: 'Inter' } }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+    }
+
+    // 2. Attendance vs Score Bar Chart
+    const ctxAtt = document.getElementById('attendanceCorrelationChart');
+    if (ctxAtt) {
+        const studentNames = {{ chart_data.names | tojson }};
+        const attendanceData = {{ chart_data.attendances | tojson }};
+        const scoreData = {{ chart_data.scores | tojson }};
+
+        new Chart(ctxAtt, {
+            type: 'bar',
+            data: {
+                labels: studentNames,
+                datasets: [
+                    {
+                        label: 'Attendance %',
+                        data: attendanceData,
+                        backgroundColor: 'rgba(56, 189, 248, 0.75)',
+                        borderColor: '#0284c7',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Predicted Score %',
+                        data: scoreData,
+                        backgroundColor: 'rgba(26, 115, 232, 0.9)',
+                        borderColor: '#1e40af',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { stepSize: 20 }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 10 },
+                            maxRotation: 45,
+                            minRotation: 20
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { boxWidth: 14 }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
